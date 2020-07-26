@@ -1,0 +1,52 @@
+version: '3'
+services:
+  postgres:
+    image: postgres:9.6.18-alpine
+    env_file:
+       - ./envs/db.env
+    volumes:
+       - db_data:/var/lib/postgresql/data
+       - ./scripts/northwind.sql:/docker-entrypoint-initdb.d/northwind.sql
+    ports:
+       - "5432:5432"
+    networks:
+       - common_gateway
+
+  generate_pgadmin_passfile:
+    image: bash:5
+    depends_on:
+      - postgres
+    env_file:
+       - ./envs/pgadmin.env
+       - ./envs/db.env
+    command:
+      - ./scripts/setup_pgadmin.sh
+    volumes:
+       - ./scripts:/scripts
+       - ./configs:/configs
+
+  pgadmin:
+    image: dpage/pgadmin4
+    depends_on:
+      - generate_pgadmin_passfile
+    env_file:
+       - ./envs/pgadmin.env
+    volumes:
+       - pgadmin:/root/.pgadmin
+       - ./configs/.pgpass:/pgadmin4/.pgpass
+       - ./configs/servers.json:/pgadmin4/servers.json
+    ports:
+       - "${PGADMIN_PORT:-80}:80"
+    links:
+       - "postgres"
+    networks:
+       - common_gateway
+    restart: unless-stopped
+
+networks:
+  common_gateway:
+    driver: bridge
+
+volumes:
+  db_data:
+  pgadmin:
