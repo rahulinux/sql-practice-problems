@@ -1,0 +1,6 @@
+psycopg2-binary
+psycopg2
+python-dotenv
+ipython-sql
+sqlalchemy
+pgspecial
